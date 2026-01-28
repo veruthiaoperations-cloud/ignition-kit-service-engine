@@ -42,7 +42,7 @@ interface GalleryItem {
 }
 
 export default async function HomePage() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { data: profiles } = await supabase
     .from("profiles")

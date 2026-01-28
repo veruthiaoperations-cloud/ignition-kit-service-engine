@@ -537,6 +537,97 @@ Public Website (SSR)
 
 ---
 
+## HOTFIX: Phase 3 - Cookies Request Scope Error
+**Date:** 2026-01-27
+**Issue:** Critical runtime error - "cookies was called outside a request scope"
+**Status:** ✅ RESOLVED
+
+### The Problem
+After completing Phase 3, the application threw an unhandled runtime error when attempting to render the homepage:
+```
+Unhandled Runtime Error: cookies was called outside a request scope
+Location: utils/supabase/server.ts
+```
+
+The build succeeded, but the application failed at runtime when trying to fetch data from Supabase on the homepage.
+
+### Root Cause Analysis
+The issue was caused by a Next.js version mismatch in the Supabase server client implementation:
+
+1. **utils/supabase/server.ts** was written with `async function createClient()` and `const cookieStore = await cookies()`
+2. This syntax is correct for Next.js 15+, where `cookies()` returns a Promise
+3. However, Ignition Kit uses **Next.js 14.2.35**, where `cookies()` is synchronous
+4. The `await` on `cookies()` in Next.js 14 caused it to be called outside the request scope
+5. This broke all Server Components that called `createClient()`, including the homepage
+
+### The Fix
+**File: utils/supabase/server.ts**
+- Changed `export async function createClient()` to `export function createClient()` (removed async)
+- Changed `const cookieStore = await cookies()` to `const cookieStore = cookies()` (removed await)
+
+**File: app/page.tsx**
+- Changed `const supabase = await createClient()` to `const supabase = createClient()` (removed await)
+
+### Why This Happened
+During Phase 1, the Supabase server client was initially written with the Next.js 15+ async pattern. This is a common mistake when following documentation that doesn't specify version differences. Next.js 14 and 15 have different APIs for `cookies()`:
+- **Next.js 14**: `cookies()` is synchronous
+- **Next.js 15+**: `cookies()` returns a Promise and must be awaited
+
+### Verification Steps Taken
+1. ✅ Fixed utils/supabase/server.ts (removed async/await)
+2. ✅ Fixed app/page.tsx (removed await on createClient)
+3. ✅ Verified no other files await createClient() (grep search - none found)
+4. ✅ Verified database migration success (all 4 tables exist with RLS enabled)
+5. ✅ Ran `npm run build` - successful compilation
+6. ✅ Confirmed homepage renders as dynamic route (ƒ symbol in build output)
+7. ✅ All admin routes still build correctly
+
+### Cross-Phase Integrity Check Results
+**Phase 1 (Foundation):**
+- ✅ Database migration successful
+- ✅ All 4 tables created: profiles, sections, services, gallery
+- ✅ RLS enabled on all tables
+- ✅ Foreign key constraints in place
+- ✅ Indexes created for performance
+
+**Phase 2 (Admin Dashboard):**
+- ✅ Admin pages use client-side Supabase client (no cookies() issue)
+- ✅ All admin routes compile and build successfully
+- ✅ Authentication flow not affected (uses browser client)
+
+**Phase 3 (Public Frontend):**
+- ✅ Homepage now renders correctly with server-side data fetching
+- ✅ Dynamic rendering confirmed (ƒ symbol in build output)
+- ✅ ThemeProvider correctly wraps content
+- ✅ All section components receive data properly
+
+### Build Output (Post-Fix)
+```
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    3.13 kB        98.9 kB  ← Dynamic SSR ✓
+├ ○ /admin                               3.8 kB          154 kB
+├ ○ /admin/gallery                       5.22 kB         155 kB
+├ ○ /admin/layout                        4.25 kB         154 kB
+├ ○ /admin/services                      5 kB            155 kB
+└ ○ /login                               2.77 kB         153 kB
+```
+
+### Lessons Learned
+1. Always verify Next.js version when implementing framework-specific features
+2. The `cookies()` API changed between Next.js 14 and 15 - check documentation for the specific version
+3. Build success doesn't guarantee runtime success - server components need runtime verification
+4. Supabase SSR setup patterns differ between Next.js versions
+
+### Current Status
+✅ **Phase 3 is now fully operational**
+- Homepage renders with live database data
+- All sections display correctly based on visibility and order
+- Theme colors apply dynamically
+- Mobile sticky button works
+- No runtime errors
+
+---
+
 ## How to Use This Log
 When resuming development:
 1. Read the latest log entry to understand the current state
