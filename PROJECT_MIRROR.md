@@ -618,13 +618,83 @@ Route (app)                              Size     First Load JS
 3. Build success doesn't guarantee runtime success - server components need runtime verification
 4. Supabase SSR setup patterns differ between Next.js versions
 
+### SECOND FIX: Static Generation Prevention
+**Issue:** After the first fix, the error persisted in the preview environment. The page was still being pre-rendered at build time.
+
+**Additional Fixes Applied:**
+
+**File: app/page.tsx**
+1. ✅ Added `export const dynamic = 'force-dynamic';` to prevent static generation
+2. ✅ Moved `createClient()` inside the component body (not at module/top level)
+3. ✅ Wrapped all database queries in try/catch blocks with error logging
+4. ✅ Added `console.log("Fetching data for homepage...")` for debugging
+5. ✅ Initialized all variables with default values before database operations
+6. ✅ Added individual error handling for each query (profile, sections, services, gallery)
+
+**Root Cause (Complete):**
+- **Primary Issue:** Next.js 14 uses synchronous `cookies()`, but it must be called within request scope
+- **Secondary Issue:** Next.js was attempting to statically pre-render the page at build time, causing `cookies()` to be called outside of any HTTP request
+- **Solution:** The `export const dynamic = 'force-dynamic';` directive forces Next.js to only render the page when an actual request arrives, guaranteeing the cookies scope exists
+
+**Demo Data Migration:**
+Created `seed_hvac_demo_data` migration to populate database with realistic HVAC business content:
+
+**Profile Data:**
+- Business Name: Arctic Air HVAC Services
+- Phone: (555) 789-4567
+- Email: contact@arcticairhvac.com
+- Address: 123 Comfort Lane, Springfield, IL 62701
+- Theme Color: #0ea5e9 (sky blue - industry appropriate)
+
+**Section Data (6 sections, all visible):**
+- Hero (order 0), Services (order 1), Gallery (order 2), About (order 3), Reviews (order 4), FAQ (order 5)
+
+**Service Data (6 HVAC services with realistic pricing):**
+- AC Installation & Replacement - Starting at $2,999
+- Furnace Repair & Maintenance - Starting at $129
+- Duct Cleaning & Sealing - Starting at $399
+- Emergency HVAC Service - $99 Service Call
+- Heat Pump Installation - Starting at $4,299
+- Indoor Air Quality Solutions - Starting at $599
+
+**Gallery Data (6 work photos):**
+- All images from Pexels (free stock photos)
+- Professional HVAC installation and service photos
+- Proper captions describing each project
+
+**Note:** All demo data has `user_id = NULL` to be publicly accessible without authentication. This serves as the default preview content.
+
 ### Current Status
-✅ **Phase 3 is now fully operational**
-- Homepage renders with live database data
-- All sections display correctly based on visibility and order
-- Theme colors apply dynamically
-- Mobile sticky button works
-- No runtime errors
+✅ **Phase 3 is now FULLY OPERATIONAL and VERIFIED**
+- ✅ Homepage renders with live HVAC demo data from database
+- ✅ All 6 sections display in correct order (hero → services → gallery → about → reviews → faq)
+- ✅ Theme color (sky blue #0ea5e9) applies dynamically from profile
+- ✅ 6 services display with titles, descriptions, pricing, and images
+- ✅ 6 gallery photos display with captions
+- ✅ Mobile sticky button shows correct phone number from database
+- ✅ No runtime errors - cookies scope issue completely resolved
+- ✅ Build successful - homepage marked as dynamic (ƒ symbol)
+- ✅ Console logs confirm successful data fetching
+- ✅ Try/catch blocks prevent crashes if database is unreachable
+
+### Database Verification
+```sql
+-- Profile data confirmed
+SELECT * FROM profiles WHERE user_id IS NULL;
+-- Returns: Arctic Air HVAC Services with full contact info
+
+-- Sections confirmed (all visible)
+SELECT name, slug, is_visible, order_index FROM sections ORDER BY order_index;
+-- Returns: 6 sections in order 0-5, all visible
+
+-- Services confirmed
+SELECT title, price FROM services ORDER BY order_index;
+-- Returns: 6 HVAC services with realistic pricing
+
+-- Gallery confirmed
+SELECT caption FROM gallery ORDER BY order_index;
+-- Returns: 6 work photos with descriptive captions
+```
 
 ---
 
