@@ -244,3 +244,43 @@ CREATE INDEX IF NOT EXISTS idx_services_user_id ON services(user_id);
 CREATE INDEX IF NOT EXISTS idx_services_order ON services(user_id, order_index);
 CREATE INDEX IF NOT EXISTS idx_gallery_user_id ON gallery(user_id);
 CREATE INDEX IF NOT EXISTS idx_gallery_order ON gallery(user_id, order_index);
+
+-- =====================================================
+-- AUTO-PROVISIONING: Default Sections on Profile Creation
+-- =====================================================
+-- This function automatically creates 6 default sections
+-- whenever a new profile is inserted.
+--
+-- The 6 sections are:
+-- 1. Hero - Landing banner with business name and CTA
+-- 2. Services - Grid of service offerings
+-- 3. Gallery - Photo showcase of completed work
+-- 4. About - Business story and credentials
+-- 5. Reviews - Customer testimonials
+-- 6. FAQ - Frequently asked questions
+--
+-- All sections are visible by default and ordered sequentially.
+
+CREATE OR REPLACE FUNCTION create_default_sections()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Insert 6 default sections for the new user
+  INSERT INTO sections (user_id, name, slug, is_visible, order_index)
+  VALUES
+    (NEW.user_id, 'Hero', 'hero', true, 0),
+    (NEW.user_id, 'Services', 'services', true, 1),
+    (NEW.user_id, 'Gallery', 'gallery', true, 2),
+    (NEW.user_id, 'About', 'about', true, 3),
+    (NEW.user_id, 'Reviews', 'reviews', true, 4),
+    (NEW.user_id, 'FAQ', 'faq', true, 5);
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger that fires after a new profile is inserted
+DROP TRIGGER IF EXISTS trigger_create_default_sections ON profiles;
+CREATE TRIGGER trigger_create_default_sections
+  AFTER INSERT ON profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION create_default_sections();
