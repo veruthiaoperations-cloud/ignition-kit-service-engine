@@ -698,6 +698,177 @@ SELECT caption FROM gallery ORDER BY order_index;
 
 ---
 
+## SECURITY & PROVISIONING UPDATE (2026-01-28)
+
+### What Changed
+This update finalizes the production-ready version with hardened security and manual admin provisioning.
+
+### 1. Hardened Login (app/login/page.tsx)
+**Changes:**
+- ✅ Removed all "Sign Up" functionality completely
+- ✅ Removed `isSignUp` state and toggle logic
+- ✅ Removed auto-provisioning code (profile/sections/services creation)
+- ✅ Simplified to sign-in only (no public registration)
+- ✅ Updated UI: "Admin Login" instead of "Welcome Back"
+- ✅ Placeholder changed to "admin@example.com" for clarity
+
+**Rationale:**
+This is a private admin tool, not a public application. Admins are provisioned manually via SQL, not through self-service signup. This prevents unauthorized access.
+
+### 2. Blank Canvas Logic Verification (app/page.tsx)
+**Current Behavior:**
+```typescript
+// Default placeholders initialized
+let profile: Profile = {
+  business_name: "Your Business Name",
+  phone: "(555) 123-4567",
+  email: "contact@yourbusiness.com",
+  address: "123 Main St, City, State 12345",
+  theme_color: "#3b82f6",
+};
+
+// Try to fetch from database
+const { data: profiles } = await supabase
+  .from("profiles")
+  .select("*")
+  .limit(1)
+  .maybeSingle();
+
+// If data exists, replace placeholder
+if (profiles) {
+  profile = profiles;
+}
+```
+
+**Behavior Confirmed:**
+- ✅ If database is empty: Shows "Your Business Name" placeholders
+- ✅ As soon as a profile row is inserted: Homepage updates automatically
+- ✅ Same logic applies to sections, services, and gallery
+- ✅ No caching issues due to `export const dynamic = 'force-dynamic'`
+
+### 3. Manual Admin Provisioning via SQL
+**Method:**
+Admins are created by executing SQL in the Supabase SQL Editor. This gives full control over who can access the admin panel.
+
+**SQL Template:**
+```sql
+-- Step 1: Create admin user in auth.users table
+-- Replace: your-email@example.com, your-secure-password
+INSERT INTO auth.users (
+  id,
+  instance_id,
+  email,
+  encrypted_password,
+  email_confirmed_at,
+  created_at,
+  updated_at,
+  raw_app_meta_data,
+  raw_user_meta_data,
+  is_super_admin,
+  role
+)
+VALUES (
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-000000000000',
+  'your-email@example.com',
+  crypt('your-secure-password', gen_salt('bf')),
+  now(),
+  now(),
+  now(),
+  '{"provider":"email","providers":["email"]}',
+  '{}',
+  false,
+  'authenticated'
+)
+RETURNING id;
+
+-- Step 2: Create matching profile (use the user ID from Step 1)
+-- Replace: USER_ID_FROM_STEP_1, Your Business Name, (555) 123-4567, etc.
+INSERT INTO profiles (user_id, business_name, phone, email, address, theme_color)
+VALUES (
+  'USER_ID_FROM_STEP_1',
+  'Arctic Air HVAC Services',
+  '(555) 789-4567',
+  'contact@arcticairhvac.com',
+  '123 Comfort Lane, Springfield, IL 62701',
+  '#0ea5e9'
+);
+
+-- Step 3: Create default sections (use the same user ID)
+INSERT INTO sections (user_id, name, slug, is_visible, order_index)
+VALUES
+  ('USER_ID_FROM_STEP_1', 'Hero', 'hero', true, 0),
+  ('USER_ID_FROM_STEP_1', 'Services', 'services', true, 1),
+  ('USER_ID_FROM_STEP_1', 'Gallery', 'gallery', true, 2),
+  ('USER_ID_FROM_STEP_1', 'About', 'about', true, 3),
+  ('USER_ID_FROM_STEP_1', 'Reviews', 'reviews', true, 4),
+  ('USER_ID_FROM_STEP_1', 'FAQ', 'faq', true, 5);
+```
+
+### 4. Final Structural Audit
+
+**Layout Manager (admin/layout/page.tsx):**
+- ✅ Correctly fetches sections from database with `user_id` filter
+- ✅ Up/Down arrows update `order_index` in database
+- ✅ Toggle switches update `is_visible` in database
+- ✅ Real-time UI updates after database changes
+- ✅ Changes immediately reflected on public homepage
+
+**Services Manager (admin/services/page.tsx):**
+- ✅ Correctly fetches services from database with `user_id` filter
+- ✅ Left/Right arrows update `order_index` in database
+- ✅ Add/Edit/Delete operations work correctly
+- ✅ Real-time UI updates after database changes
+- ✅ Changes immediately reflected on public homepage
+
+**Gallery Manager (admin/gallery/page.tsx):**
+- ✅ Already implemented with full CRUD operations
+- ✅ Image URL input for Pexels links
+- ✅ Reordering functionality ready
+
+### Security Posture
+**What's Locked Down:**
+1. ✅ No public signup route
+2. ✅ All database tables have RLS enabled
+3. ✅ Users can only access their own data (enforced by RLS policies)
+4. ✅ Public can view any profile/sections/services/gallery (demo data with `user_id = NULL`)
+5. ✅ Authenticated users can only modify their own records
+
+**Admin Provisioning Workflow:**
+1. Developer/Admin runs SQL in Supabase SQL Editor
+2. Creates auth.users record with hashed password
+3. Creates matching profile record with user_id
+4. Creates default sections for that user
+5. Admin can now log in at /login
+6. Admin manages their own content in /admin
+
+### Build Verification
+```
+Route (app)                              Size     First Load JS
+┌ ƒ /                                    3.13 kB        98.9 kB  ← Dynamic (forces request scope)
+├ ○ /login                               2.16 kB         152 kB  ← Smaller (signup removed)
+├ ○ /admin                               3.8 kB          154 kB
+├ ○ /admin/gallery                       5.22 kB         155 kB
+├ ○ /admin/layout                        4.25 kB         154 kB
+└ ○ /admin/services                      5 kB            155 kB
+```
+
+### Current Production Status
+✅ **PRODUCTION READY**
+- ✅ Login hardened (sign-in only)
+- ✅ Blank canvas logic working correctly
+- ✅ Manual admin provisioning documented
+- ✅ Layout Manager ready for use
+- ✅ Services Manager ready for use
+- ✅ Gallery Manager ready for use
+- ✅ All admin tools connected to database
+- ✅ All reordering arrows functional
+- ✅ RLS policies secure and tested
+- ✅ No runtime errors
+- ✅ Build successful
+
+---
+
 ## How to Use This Log
 When resuming development:
 1. Read the latest log entry to understand the current state
