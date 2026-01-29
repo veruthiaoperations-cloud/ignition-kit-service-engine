@@ -84,19 +84,30 @@ export default function LoginPage() {
         return;
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      if (signInError) {
-        setError(signInError.message);
-        setLoading(false);
-        return;
+      let lastError = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (!signInError) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+          router.push("/admin");
+          router.refresh();
+          return;
+        }
+
+        lastError = signInError;
+        if (attempt < 2) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
       }
 
-      router.push("/admin");
-      router.refresh();
+      setError(lastError?.message || "Failed to sign in after account creation");
+      setLoading(false);
     } catch (err) {
       setError("Failed to create account");
       setLoading(false);

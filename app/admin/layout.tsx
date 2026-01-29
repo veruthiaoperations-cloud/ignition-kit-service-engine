@@ -26,14 +26,22 @@ export default function AdminLayout({
 
   useEffect(() => {
     const checkAuth = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/login");
-      } else {
-        setLoading(false);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (user) {
+          setLoading(false);
+          return;
+        }
+
+        if (attempt < 4) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       }
+
+      router.push("/login");
     };
     checkAuth();
   }, [router, supabase]);
