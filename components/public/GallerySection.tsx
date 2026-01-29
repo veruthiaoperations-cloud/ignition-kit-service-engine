@@ -37,14 +37,6 @@ export function GallerySection({ items }: GallerySectionProps) {
                     src={item.image_url}
                     alt={item.caption || "Gallery image"}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = "none";
-                      const parent = (e.target as HTMLImageElement).parentElement;
-                      if (parent) {
-                        parent.innerHTML =
-                          '<div class="flex items-center justify-center w-full h-full bg-slate-200"><svg class="h-12 w-12 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg></div>';
-                      }
-                    }}
                   />
                 ) : (
                   <ImageIcon className="h-12 w-12 text-slate-400" />
