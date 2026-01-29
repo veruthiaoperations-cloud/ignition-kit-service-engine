@@ -59,7 +59,7 @@ export default async function HomePage() {
   let galleryItems: GalleryItem[] = [];
 
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { data: profiles, error: profileError } = await supabase
       .from("profiles")
