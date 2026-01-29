@@ -44,7 +44,8 @@ interface GalleryItem {
 }
 
 export default async function HomePage() {
-  console.log("Fetching data for homepage...");
+  console.log("=== HOMEPAGE DATA FETCH START ===");
+  console.log("Timestamp:", new Date().toISOString());
 
   let profile: Profile = {
     business_name: "Your Business Name",
@@ -60,59 +61,77 @@ export default async function HomePage() {
 
   try {
     const supabase = await createClient();
+    console.log("Supabase client created");
 
-    const { data: profiles, error: profileError } = await supabase
+    const { data: profileData, error: profileError } = await supabase
       .from("profiles")
-      .select("*")
+      .select("business_name, phone, email, address, theme_color")
       .limit(1)
       .maybeSingle();
 
+    console.log("Profile query result:", { data: profileData, error: profileError });
+
     if (profileError) {
-      console.error("Error fetching profile:", profileError);
-    } else if (profiles) {
-      profile = profiles;
-      console.log("Profile loaded:", profile.business_name);
+      console.error("PROFILE ERROR:", profileError.message, profileError.code);
+    } else if (profileData) {
+      profile = profileData;
+      console.log("Profile loaded successfully:", profile.business_name);
+    } else {
+      console.log("No profile found in database - using defaults");
     }
 
-    const { data: sections, error: sectionsError } = await supabase
+    const { data: sectionsData, error: sectionsError } = await supabase
       .from("sections")
-      .select("*")
+      .select("id, slug, name, is_visible, order_index")
       .eq("is_visible", true)
       .order("order_index", { ascending: true });
 
+    console.log("Sections query result:", { count: sectionsData?.length, error: sectionsError });
+
     if (sectionsError) {
-      console.error("Error fetching sections:", sectionsError);
+      console.error("SECTIONS ERROR:", sectionsError.message, sectionsError.code);
     } else {
-      visibleSections = (sections || []) as Section[];
-      console.log("Sections loaded:", visibleSections.length);
+      visibleSections = (sectionsData || []) as Section[];
+      console.log("Sections loaded:", visibleSections.length, visibleSections.map(s => s.slug));
     }
 
-    const { data: services, error: servicesError } = await supabase
+    const { data: servicesData, error: servicesError } = await supabase
       .from("services")
-      .select("*")
+      .select("id, title, description, price, image_url, order_index")
       .order("order_index", { ascending: true });
 
+    console.log("Services query result:", { count: servicesData?.length, error: servicesError });
+
     if (servicesError) {
-      console.error("Error fetching services:", servicesError);
+      console.error("SERVICES ERROR:", servicesError.message, servicesError.code);
     } else {
-      serviceList = (services || []) as Service[];
+      serviceList = (servicesData || []) as Service[];
       console.log("Services loaded:", serviceList.length);
     }
 
-    const { data: gallery, error: galleryError } = await supabase
+    const { data: galleryData, error: galleryError } = await supabase
       .from("gallery")
-      .select("*")
+      .select("id, image_url, caption, order_index")
       .order("order_index", { ascending: true });
 
+    console.log("Gallery query result:", { count: galleryData?.length, error: galleryError });
+
     if (galleryError) {
-      console.error("Error fetching gallery:", galleryError);
+      console.error("GALLERY ERROR:", galleryError.message, galleryError.code);
     } else {
-      galleryItems = (gallery || []) as GalleryItem[];
+      galleryItems = (galleryData || []) as GalleryItem[];
       console.log("Gallery items loaded:", galleryItems.length);
     }
   } catch (error) {
-    console.error("Error in HomePage:", error);
+    console.error("CRITICAL ERROR in HomePage:", error);
   }
+
+  console.log("=== FINAL DATA SUMMARY ===");
+  console.log("Profile:", profile.business_name);
+  console.log("Sections:", visibleSections.length);
+  console.log("Services:", serviceList.length);
+  console.log("Gallery:", galleryItems.length);
+  console.log("=== HOMEPAGE DATA FETCH END ===");
 
   const sectionComponents: Record<string, React.ReactNode> = {
     hero: <HeroSection businessName={profile.business_name} phone={profile.phone} />,
