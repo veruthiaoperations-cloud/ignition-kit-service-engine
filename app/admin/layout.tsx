@@ -26,24 +26,31 @@ export default function AdminLayout({
 
   useEffect(() => {
     const checkAuth = async () => {
-      for (let attempt = 0; attempt < 5; attempt++) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-        if (user) {
-          setLoading(false);
-          return;
-        }
-
-        if (attempt < 4) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-        }
+      if (!session) {
+        router.push("/login");
+        return;
       }
 
-      router.push("/login");
+      setLoading(false);
     };
+
     checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!session) {
+          router.push("/login");
+        }
+      }
+    );
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, [router, supabase]);
 
   const handleSignOut = async () => {
