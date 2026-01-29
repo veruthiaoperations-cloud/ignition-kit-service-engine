@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Plus, Edit2, Trash2, ChevronLeft, ChevronRight, Wrench } from "lucide-react";
+import { revalidateHomepage } from "@/app/actions";
 
 interface Service {
   id: string;
@@ -113,7 +114,8 @@ export default function ServicesManagerPage() {
       }
 
       setShowDialog(false);
-      loadServices();
+      await loadServices();
+      await revalidateHomepage();
     } catch (error) {
       console.error("Error saving service:", error);
       showMessage("Error saving service");
@@ -131,7 +133,8 @@ export default function ServicesManagerPage() {
 
       if (error) throw error;
       showMessage("Service deleted");
-      loadServices();
+      await loadServices();
+      await revalidateHomepage();
     } catch (error) {
       console.error("Error deleting service:", error);
       showMessage("Error deleting service");
@@ -168,6 +171,7 @@ export default function ServicesManagerPage() {
       }
 
       setServices(newServices.map((s, index) => ({ ...s, order_index: index + 1 })));
+      await revalidateHomepage();
       showMessage("Service order updated");
     } catch (error) {
       console.error("Error updating order:", error);

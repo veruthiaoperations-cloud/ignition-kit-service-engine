@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Plus, Trash2, ChevronLeft, ChevronRight, ImageIcon } from "lucide-react";
+import { revalidateHomepage } from "@/app/actions";
 
 interface GalleryItem {
   id: string;
@@ -86,7 +87,8 @@ export default function GalleryManagerPage() {
       if (error) throw error;
       showMessage("Image added successfully");
       setShowDialog(false);
-      loadGallery();
+      await loadGallery();
+      await revalidateHomepage();
     } catch (error) {
       console.error("Error saving image:", error);
       showMessage("Error saving image");
@@ -101,7 +103,8 @@ export default function GalleryManagerPage() {
 
       if (error) throw error;
       showMessage("Image deleted");
-      loadGallery();
+      await loadGallery();
+      await revalidateHomepage();
     } catch (error) {
       console.error("Error deleting image:", error);
       showMessage("Error deleting image");
@@ -138,6 +141,7 @@ export default function GalleryManagerPage() {
       }
 
       setItems(newItems.map((item, index) => ({ ...item, order_index: index + 1 })));
+      await revalidateHomepage();
       showMessage("Gallery order updated");
     } catch (error) {
       console.error("Error updating order:", error);

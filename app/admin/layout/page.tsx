@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { ChevronUp, ChevronDown } from "lucide-react";
+import { revalidateHomepage } from "@/app/actions";
 
 interface Section {
   id: string;
@@ -65,6 +66,7 @@ export default function LayoutManagerPage() {
         )
       );
 
+      await revalidateHomepage();
       showMessage("Section visibility updated");
     } catch (error) {
       console.error("Error updating section:", error);
@@ -102,6 +104,7 @@ export default function LayoutManagerPage() {
       }
 
       setSections(newSections.map((s, index) => ({ ...s, order_index: index + 1 })));
+      await revalidateHomepage();
       showMessage("Section order updated");
     } catch (error) {
       console.error("Error updating order:", error);
