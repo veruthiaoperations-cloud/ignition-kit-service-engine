@@ -1,26 +1,5 @@
 {
-  "node": {
-    "270f01bce0d43f81208e2cb9c997d968d97f0843": {
-      "workers": {
-        "app/login/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fproject%2Fapp%2Flogin%2Factions.ts%22%2C%5B%22signIn%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/login/page": "action-browser"
-      }
-    },
-    "16aa1718b2b6f8f7c9af62b2e34e830581c8408f": {
-      "workers": {
-        "app/admin/layout/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fproject%2Fapp%2Factions.ts%22%2C%5B%22revalidateHomepage%22%5D%5D%5D&__client_imported__=true!",
-        "app/admin/services/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fproject%2Fapp%2Factions.ts%22%2C%5B%22revalidateHomepage%22%5D%5D%5D&__client_imported__=true!",
-        "app/admin/gallery/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fproject%2Fapp%2Factions.ts%22%2C%5B%22revalidateHomepage%22%5D%5D%5D&__client_imported__=true!"
-      },
-      "layer": {
-        "app/admin/layout/page": "action-browser",
-        "app/admin/services/page": "action-browser",
-        "app/admin/gallery/page": "action-browser"
-      }
-    }
-  },
+  "node": {},
   "edge": {},
-  "encryptionKey": "JAiC2/P0cD05rcGFLfANlIQgtbMjam/2B1MzhkoFtkk="
+  "encryptionKey": "ClITRs45Z3nqkndK1bfj9Hr2n5A1DFa541k6aPsNtN4="
 }
