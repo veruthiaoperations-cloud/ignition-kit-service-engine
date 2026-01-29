@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createPublicClient } from "@/utils/supabase/public";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { HeroSection } from "@/components/public/HeroSection";
 import { ServicesGrid } from "@/components/public/ServicesGrid";
@@ -60,8 +60,8 @@ export default async function HomePage() {
   let galleryItems: GalleryItem[] = [];
 
   try {
-    const supabase = await createClient();
-    console.log("Supabase client created");
+    const supabase = createPublicClient();
+    console.log("Supabase public client created");
 
     const { data: profileData, error: profileError } = await supabase
       .from("profiles")
