@@ -1,5 +1,14 @@
 {
-  "node": {},
+  "node": {
+    "16aa1718b2b6f8f7c9af62b2e34e830581c8408f": {
+      "workers": {
+        "app/admin/services/page": "(action-browser)/./node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2Fhome%2Fproject%2Fapp%2Factions.ts%22%2C%5B%22revalidateHomepage%22%5D%5D%5D&__client_imported__=true!"
+      },
+      "layer": {
+        "app/admin/services/page": "action-browser"
+      }
+    }
+  },
   "edge": {},
   "encryptionKey": "e7YLX/NjO4WqW2EeG3s8tGVk9nrPlzaS35LXdum4N7U="
 }
